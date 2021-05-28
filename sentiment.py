@@ -5,38 +5,13 @@ from nltk.classify.scikitlearn import SklearnClassifier
 import pickle
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.svm import SVC, LinearSVC, NuSVC
-from nltk.classify import ClassifierI
-from statistics import mode
+from sklearn.svm import SVC, LinearSVC
 from nltk.tokenize import word_tokenize
-
-
-class VoteClassifier(ClassifierI):
-    def __init__(self, *classifiers):
-        self._classifiers = classifiers
-
-    def classify(self, features):
-        votes = []
-        for c in self._classifiers:
-            v = c.classify(features)
-            votes.append(v)
-        return mode(votes)
-
-    def confidence(self, features):
-        votes = []
-        for c in self._classifiers:
-            v = c.classify(features)
-            votes.append(v)
-
-        choice_votes = votes.count(mode(votes))
-        conf = choice_votes / len(votes)
-        return conf
 
 
 short_pos = open("positive.txt", "r").read()
 short_neg = open("negative.txt", "r").read()
 
-# move this up here
 all_words = []
 documents = []
 
@@ -78,11 +53,12 @@ def find_features(document):
     features = {}
     for w in word_features:
         features[w] = (w in words)
-
     return features
 
 
 featuresets = [(find_features(rev), category) for (rev, category) in documents]
+
+print(featuresets)
 
 random.shuffle(featuresets)
 print(len(featuresets))
@@ -90,11 +66,11 @@ print(len(featuresets))
 testing_set = featuresets[10000:]
 training_set = featuresets[:10000]
 
+
 classifier = nltk.NaiveBayesClassifier.train(training_set)
 print("Original Naive Bayes Algo accuracy percent:", (nltk.classify.accuracy(classifier, testing_set)) * 100)
 classifier.show_most_informative_features(15)
 
-###############
 save_classifier = open("pickled_algos/originalnaivebayes5k.pickle", "wb")
 pickle.dump(classifier, save_classifier)
 save_classifier.close()
@@ -117,8 +93,7 @@ save_classifier.close()
 
 LogisticRegression_classifier = SklearnClassifier(LogisticRegression())
 LogisticRegression_classifier.train(training_set)
-print("LogisticRegression_classifier accuracy percent:",
-      (nltk.classify.accuracy(LogisticRegression_classifier, testing_set)) * 100)
+print("LogisticRegression_classifier accuracy percent:", (nltk.classify.accuracy(LogisticRegression_classifier, testing_set)) * 100)
 
 save_classifier = open("pickled_algos/LogisticRegression_classifier5k.pickle", "wb")
 pickle.dump(LogisticRegression_classifier, save_classifier)
@@ -132,11 +107,6 @@ save_classifier = open("pickled_algos/LinearSVC_classifier5k.pickle", "wb")
 pickle.dump(LinearSVC_classifier, save_classifier)
 save_classifier.close()
 
-##NuSVC_classifier = SklearnClassifier(NuSVC())
-##NuSVC_classifier.train(training_set)
-##print("NuSVC_classifier accuracy percent:", (nltk.classify.accuracy(NuSVC_classifier, testing_set))*100)
-
-
 SGDC_classifier = SklearnClassifier(SGDClassifier())
 SGDC_classifier.train(training_set)
 print("SGDClassifier accuracy percent:", nltk.classify.accuracy(SGDC_classifier, testing_set) * 100)
@@ -144,3 +114,4 @@ print("SGDClassifier accuracy percent:", nltk.classify.accuracy(SGDC_classifier,
 save_classifier = open("pickled_algos/SGDC_classifier5k.pickle", "wb")
 pickle.dump(SGDC_classifier, save_classifier)
 save_classifier.close()
+
